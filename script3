@@ -873,7 +873,6 @@ echo $NS_DOMAIN > /root/nsdomain
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
 }
 
-autodns
 startinstall
 clear
 display_menu
