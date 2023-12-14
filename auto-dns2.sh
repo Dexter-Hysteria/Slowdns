@@ -1,10 +1,23 @@
 #!/bin/bash
+# SL
+# ==========================================
+# Color
+RED='\033[0;31m'
+NC='\033[0m'
+GREEN='\033[0;32m'
+ORANGE='\033[0;33m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+LIGHT='\033[0;37m'
+# ==========================================
+# Getting a
+MYIP=$(wget -qO- ipinfo.io/ip);
+echo "Checking VPS"
 
-MYIP=$(wget -qO- icanhazip.com);
-apt install jq curl
+clear
+apt install jq curl -y
 
-
-NS_DOMAIN=${sub}.dnstunnel.net
 echo $NS_DOMAIN > /root/nsdomain
 echo $SUB_DOMAIN > /root/subdomain  #save subdomain
 
@@ -15,9 +28,11 @@ CF_ID=d.eskalarte@gmail.com
 CF_KEY=1d0e138b7b9c1368f6cc1b5f8fef94e3c25a8
 
 
-echo "$NS_DOMAIN" >> /root/nsdomain
+NS_DOMAIN=slowdns-${SUB_DOMAIN}
+
+
 set -euo pipefail
-IP=$(wget -qO- icanhazip.com);
+IP=$(wget -qO- ipinfo.io/ip);
 echo "Updating DNS for ${SUB_DOMAIN}..."
 ZONE=$(curl -sLX GET "https://api.cloudflare.com/client/v4/zones?name=${DOMAIN}&status=active" \
      -H "X-Auth-Email: ${CF_ID}" \
@@ -42,7 +57,11 @@ RESULT=$(curl -sLX PUT "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_r
      -H "X-Auth-Key: ${CF_KEY}" \
      -H "Content-Type: application/json" \
      --data '{"type":"A","name":"'${SUB_DOMAIN}'","content":"'${IP}'","ttl":120,"proxied":false}')
-echo "Updating DNS NS for ${NS_DOMAIN}..."
+
+
+#add recond NS
+echo "$NS_DOMAIN" >> /root/nsdomain
+
 ZONE=$(curl -sLX GET "https://api.cloudflare.com/client/v4/zones?name=${DOMAIN}&status=active" \
      -H "X-Auth-Email: ${CF_ID}" \
      -H "X-Auth-Key: ${CF_KEY}" \
@@ -66,7 +85,12 @@ RESULT=$(curl -sLX PUT "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_r
      -H "X-Auth-Key: ${CF_KEY}" \
      -H "Content-Type: application/json" \
      --data '{"type":"NS","name":"'${NS_DOMAIN}'","content":"'${SUB_DOMAIN}'","ttl":120,"proxied":false}')
+
+
+
 echo "Host : $SUB_DOMAIN"
 echo $SUB_DOMAIN > /root/subdomain
 echo "Host NS : $NS_DOMAIN"
 echo $NS_DOMAIN > /root/nsdomain
+
+rm -rf dns-cf.sh
