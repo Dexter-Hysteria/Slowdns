@@ -28,7 +28,7 @@ CF_ID=d.eskalarte@gmail.com
 CF_KEY=1d0e138b7b9c1368f6cc1b5f8fef94e3c25a8
 
 
-NS_DOMAIN=slowdns-${SUB_DOMAIN}
+NS_DOMAIN=dexter-${SUB_DOMAIN}
 
 
 set -euo pipefail
