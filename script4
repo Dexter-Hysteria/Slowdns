@@ -21,8 +21,6 @@ echo '
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
 echo ""
 
-apt-get update
-
 # Getting a
 MYIP=$(wget -qO- ipinfo.io/ip);
 echo "Checking VPS"
@@ -97,7 +95,7 @@ RESULT=$(curl -sLX PUT "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_r
      --data '{"type":"NS","name":"'${NS_DOMAIN}'","content":"'${SUB_DOMAIN}'","ttl":120,"proxied":false}')
 
 startinstall(){
-
+apt-get update
 mkdir /etc/update-motd.d
 apt-get install inxi screenfetch lolcat figlet -y
 
