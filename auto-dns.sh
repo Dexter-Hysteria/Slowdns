@@ -1,7 +1,7 @@
 #!/bin/bash
 
 MYIP=$(wget -qO- icanhazip.com);
-apt install jq curl -Y
+apt install jq curl
 
 cd
 DMN=$(cat /root/domain)
@@ -10,7 +10,7 @@ NS_DOMAIN=dns-${DMN}
 echo $NS_DOMAIN > /root/nsdomain
 echo $SUB_DOMAIN > /root/subdomain  #save subdomain
 
-DOMAIN=f355829870d66f4b3f2ab452721d52ef
+DOMAIN=dnstunnel.net
 sub=$(</dev/urandom tr -dc a-z0-9 | head -c6)
 SUB_DOMAIN=${sub}.dnstunnel.net
 CF_ID=d.eskalarte@gmail.com
