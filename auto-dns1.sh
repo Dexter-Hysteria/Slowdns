@@ -3,10 +3,8 @@
 MYIP=$(wget -qO- icanhazip.com);
 apt install jq curl
 
-cd
-DMN=$(cat /root/domain)
 
-NS_DOMAIN=dns-${DMN}
+NS_DOMAIN=${sub}.dnstunnel.net
 echo $NS_DOMAIN > /root/nsdomain
 echo $SUB_DOMAIN > /root/subdomain  #save subdomain
 
