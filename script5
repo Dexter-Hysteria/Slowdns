@@ -96,7 +96,6 @@ RESULT=$(curl -sLX PUT "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_r
 
 startinstall(){
 apt-get update
-rm -f /etc/update-motd.d
 apt-get install inxi screenfetch lolcat figlet -y
 
 /bin/cat <<"EOM" >/etc/update-motd.d/01-custom
