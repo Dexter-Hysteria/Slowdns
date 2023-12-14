@@ -19,9 +19,10 @@ echo -e " \033[0;35m════════════════════
 echo ""
 
 autodns(){
-MYIP=$(wget -qO- icanhazip.com);
+apt-get update
 apt install jq curl
 
+MYIP=$(wget -qO- icanhazip.com);
 
 NS_DOMAIN=${sub}.dnstunnel.net
 echo $NS_DOMAIN > /root/nsdomain
@@ -88,7 +89,7 @@ RESULT=$(curl -sLX PUT "https://api.cloudflare.com/client/v4/zones/${ZONE}/dns_r
 }
 
 startinstall(){
-apt-get update
+
 mkdir /etc/update-motd.d
 apt-get install inxi screenfetch lolcat figlet -y
 
