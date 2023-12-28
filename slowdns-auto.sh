@@ -22,14 +22,12 @@ sleep 5
 
 startinstall(){
 apt update
-apt install php php-mysqli php-mysql php-gd php-mbstring -y
 apt install -y curl wget cron python-minimal libpython-stdlib
+apt install -y iptables
 apt install -y openvpn netcat httpie php neofetch vnstat
 apt install -y screen squid stunnel4 dropbear gnutls-bin python
 apt install -y dos2unix nano unzip jq virt-what net-tools default-mysql-client
 apt install -y mlocate dh-make libaudit-dev build-essential fail2ban
-
-
 apt-get install dropbear unzip build-essential curl stunnel4 net-tools python python2 lsof git netcat -y
 sed -i 's/NO_START=1/NO_START=0/g' /etc/default/dropbear
 sed -i 's/DROPBEAR_PORT=22/DROPBEAR_PORT=442/g' /etc/default/dropbear
