@@ -21,37 +21,22 @@ echo -e "PLease Wait 5 Seconds To Start Installation"
 sleep 5
 
 startinstall(){
-apt-get update
-mkdir /etc/update-motd.d
-apt-get install inxi screenfetch lolcat figlet -y
-sed -i 's/Listen 80/Listen 81/g' /etc/apache2/ports.conf
-systemctl restart apache2
+apt update
+apt install php php-mysqli php-mysql php-gd php-mbstring -y
+apt install -y curl wget cron python-minimal libpython-stdlib
+apt install -y openvpn netcat httpie php neofetch vnstat
+apt install -y screen squid stunnel4 dropbear gnutls-bin python
+apt install -y dos2unix nano unzip jq virt-what net-tools default-mysql-client
+apt install -y mlocate dh-make libaudit-dev build-essential fail2ban
 
-/bin/cat <<"EOM" >/etc/update-motd.d/01-custom
-#!/bin/sh
-
-exec 2>&1
-
-# lolcat MIGHT NOT BE IN $PATH YET, SO BE EXPLICIT
-LOLCAT=/usr/games/lolcat
-
-# UPPERCASE HOSTNAME, APPLY FIGLET FONT "block" AND CENTERING
-INFO_HOST=$(echo DEXTER | awk '{print toupper($0)}' | figlet -tc -f block)
-
-# RUN IT ALL THROUGH lolcat FOR COLORING
-printf "%s\n%s\n" "$INFO_HOST" | $LOLCAT -f
-EOM
-
-chmod -x /etc/update-motd.d/*
-chmod +x /etc/update-motd.d/01-custom
-rm /etc/motd
-touch /etc/motd.tail
 
 apt-get install dropbear unzip build-essential curl stunnel4 net-tools python python2 lsof git netcat -y
 sed -i 's/NO_START=1/NO_START=0/g' /etc/default/dropbear
 sed -i 's/DROPBEAR_PORT=22/DROPBEAR_PORT=442/g' /etc/default/dropbear
 echo "/bin/false" >> /etc/shells
 echo "/usr/sbin/nologin" >> /etc/shells
+sed -i 's/Listen 80/Listen 81/g' /etc/apache2/ports.conf
+systemctl restart apache2
 service dropbear restart
 
 cat << \websocket > /usr/local/sbin/websocket.py
@@ -818,11 +803,15 @@ EOF152
 display_menu () {
 clear
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
-figlet -k Dexter | awk '{gsub(/./,"\033[3"int(rand()*5+1)"m&\033[0m")}1'
+echo '                                                              
+    ██████╗ ███████╗██╗  ██╗████████╗███████╗██████╗ 
+    ██╔══██╗██╔════╝╚██╗██╔╝╚══██╔══╝██╔════╝██╔══██╗
+    ██║  ██║█████╗   ╚███╔╝    ██║   █████╗  ██████╔╝
+    ██║  ██║██╔══╝   ██╔██╗    ██║   ██╔══╝  ██╔══██╗
+    ██████╔╝███████╗██╔╝ ██╗   ██║   ███████╗██║  ██║
+    ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝  
+ '
 echo -e " \033[0;35m══════════════════════════════════════════════════════════════════\033[0m"
-echo ""
-echo "${T_GREEN}MTK SLOWDNS Installation completed!${T_RESET}"
-echo ""
 }
 
 ports () {
