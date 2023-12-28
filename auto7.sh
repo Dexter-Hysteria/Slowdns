@@ -1,4 +1,4 @@
-#!/bin/bash
+ #!/bin/bash
 
 RED='\033[01;31m';
 RESET='\033[0m';
@@ -799,7 +799,7 @@ cat <<EOF152> /var/www/html/index.html
 <body>
 <div class="container" style="padding-top: 50px">
 <div class="jumbotron">
-<h1 class="display-3 text-center fn-color">Tk@Network</h1>
+<h1 class="display-3 text-center fn-color">Dexter Eskalarte</h1>
 
 <p class="text-center">NS: $(cat /root/ns.txt)</p>
 
