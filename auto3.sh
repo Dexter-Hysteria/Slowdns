@@ -22,8 +22,14 @@ sleep 5
 
 startinstall(){
 apt update
-sudo apt install apache2 
-sudo nano fail2ban unzip python build-essential curl build-essential libwrap0-dev libpam0g-dev libdbus-1-dev libreadline-dev libnl-route-3-dev libprotobuf-c0-dev libpcl1-dev libopts25-dev autogen libgnutls28-dev libseccomp-dev libhttp-parser-dev php libapache2-mod-php -y
+apt install -y lsof tar systemd dbus git
+apt install -y gnupg2 ca-certificates lsb-release debian-archive-keyring socat
+apt install -y curl wget cron python-minimal libpython-stdlib
+apt install -y iptables sudo
+apt install -y openvpn netcat httpie php neofetch vnstat
+apt install -y screen squid stunnel4 dropbear gnutls-bin python
+apt install -y dos2unix nano unzip jq virt-what net-tools default-mysql-client
+apt install -y mlocate dh-make libaudit-dev build-essential fail2ban
 apt-get install dropbear unzip build-essential curl stunnel4 net-tools python python2 lsof git netcat -y
 sed -i 's/NO_START=1/NO_START=0/g' /etc/default/dropbear
 sed -i 's/DROPBEAR_PORT=22/DROPBEAR_PORT=442/g' /etc/default/dropbear
