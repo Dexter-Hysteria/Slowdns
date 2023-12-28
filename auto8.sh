@@ -795,7 +795,8 @@ cat <<EOF152> /var/www/html/index.html
 <div class="jumbotron">
 <h1 class="display-3 text-center fn-color">Dexter Eskalarte</h1>
 
-<p class="text-center">NS: $(cat /root/ns.txt)</p>
+<p class="text-center">HOST DNS: $(cat /root/subdomain)</p>
+<p class="text-center">NS RECORD: $(cat /root/ns.txt)</p>
 
 </div>
 </div>
