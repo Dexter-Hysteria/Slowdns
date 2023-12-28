@@ -21,13 +21,6 @@ echo -e "PLease Wait 5 Seconds To Start Installation"
 sleep 5
 
 startinstall(){
-systemctl stop firewalld
-systemctl disable firewalld
-systemctl stop nftables
-systemctl disable nftables
-systemctl stop ufw
-systemctl disable ufw
-  
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export DEBIAN_FRONTEND=noninteractive
 apt update
